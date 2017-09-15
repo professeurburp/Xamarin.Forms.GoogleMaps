@@ -73,6 +73,7 @@ namespace Xamarin.Forms.GoogleMaps
         public event EventHandler<MapLongClickedEventArgs> MapLongClicked;
         public event EventHandler<MyLocationButtonClickedEventArgs> MyLocationButtonClicked;
         public event EventHandler<CameraChangedEventArgs> CameraChanged;
+        public event EventHandler<EventArgs> UserGestureDetected;
 
         internal Action<MoveToRegionMessage> OnMoveToRegion { get; set; }
 
@@ -371,6 +372,11 @@ namespace Xamarin.Forms.GoogleMaps
             var args = new MyLocationButtonClickedEventArgs();
             MyLocationButtonClicked?.Invoke(this, args);
             return args.Handled;
+        }
+
+        internal void SendCameraWillMoveFromGesture()
+        {
+            UserGestureDetected?.Invoke(this, new EventArgs());
         }
 
         internal void SendCameraChanged(CameraPosition position)

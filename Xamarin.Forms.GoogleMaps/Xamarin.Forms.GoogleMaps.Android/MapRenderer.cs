@@ -18,11 +18,14 @@ using Android.Views;
 using Xamarin.Forms.GoogleMaps.Android.Logics;
 using Xamarin.Forms.GoogleMaps.Internals;
 using GCameraUpdateFactory = Android.Gms.Maps.CameraUpdateFactory;
+
 using GCameraPosition = Android.Gms.Maps.Model.CameraPosition;
+using static Android.Gms.Maps.GoogleMap;
 
 namespace Xamarin.Forms.GoogleMaps.Android
 {
     public class MapRenderer : ViewRenderer,
+        GoogleMap.IOnCameraMoveStartedListener,
         GoogleMap.IOnCameraChangeListener,
         GoogleMap.IOnMapClickListener,
         GoogleMap.IOnMapLongClickListener,
@@ -117,7 +120,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
                 var oldGoogleMap = await oldMapView.GetGoogleMapAsync();
                 if (oldGoogleMap != null)
                 {
-
+                    oldGoogleMap.SetOnCameraMoveStartedListener(null);
                     oldGoogleMap.SetOnCameraChangeListener(null);
                     oldGoogleMap.SetOnMapClickListener(null);
                     oldGoogleMap.SetOnMapLongClickListener(null);
@@ -158,6 +161,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
         {
             if (map != null)
             {
+                map.SetOnCameraMoveStartedListener(this);
                 map.SetOnCameraChangeListener(this);
                 map.SetOnMapClickListener(this);
                 map.SetOnMapLongClickListener(this);
@@ -373,6 +377,14 @@ namespace Xamarin.Forms.GoogleMaps.Android
                 (int)(Map.Padding.Top * _scaledDensity), 
                 (int)(Map.Padding.Right * _scaledDensity),
                 (int)(Map.Padding.Bottom * _scaledDensity));
+        }
+
+        public void OnCameraMoveStarted(int reason)
+        {
+            if (OnCameraMoveStartedListener.ReasonGesture == reason)
+            {
+                Map.SendCameraWillMoveFromGesture();
+            }
         }
 
         public void OnCameraChange(GCameraPosition pos)

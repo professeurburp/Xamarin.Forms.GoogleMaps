@@ -63,6 +63,7 @@ namespace Xamarin.Forms.GoogleMaps.iOS
                 var mkMapView = (MapView)Control;
                 mkMapView.CoordinateLongPressed -= CoordinateLongPressed;
                 mkMapView.CoordinateTapped -= CoordinateTapped;
+                mkMapView.WillMove -= CameraPositionWillMove;
                 mkMapView.CameraPositionChanged -= CameraPositionChanged;
                 mkMapView.DidTapMyLocationButton = null;
             }
@@ -99,6 +100,7 @@ namespace Xamarin.Forms.GoogleMaps.iOS
                 {
                     oldMapView.CoordinateLongPressed -= CoordinateLongPressed;
                     oldMapView.CoordinateTapped -= CoordinateTapped;
+                    oldMapView.WillMove -= CameraPositionWillMove;
                     oldMapView.CameraPositionChanged -= CameraPositionChanged;
                     oldMapView.DidTapMyLocationButton = null;
                 }
@@ -112,6 +114,7 @@ namespace Xamarin.Forms.GoogleMaps.iOS
                 {
                     SetNativeControl(new MapView(RectangleF.Empty));
                     var mkMapView = (MapView)Control;
+                    mkMapView.WillMove += CameraPositionWillMove;
                     mkMapView.CameraPositionChanged += CameraPositionChanged;
                     mkMapView.CoordinateTapped += CoordinateTapped;
                     mkMapView.CoordinateLongPressed += CoordinateLongPressed;
@@ -238,6 +241,19 @@ namespace Xamarin.Forms.GoogleMaps.iOS
             {
                 snapshotMessage.OnSnapshot.Invoke(snapshot.AsPNG().AsStream());
             });
+        }
+
+        void CameraPositionWillMove(object sender, GMSWillMoveEventArgs e)
+        {
+            OnCameraPositionWillMove(e.Gesture);
+        }
+
+        void OnCameraPositionWillMove(bool isGesture)
+        {
+            if (isGesture)
+            {
+                Map.SendCameraWillMoveFromGesture();
+            }
         }
 
         void CameraPositionChanged(object sender, GMSCameraEventArgs args)
