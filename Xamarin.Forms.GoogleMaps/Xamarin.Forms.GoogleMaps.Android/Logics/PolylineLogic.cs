@@ -45,6 +45,8 @@ namespace Xamarin.Forms.GoogleMaps.Logics.Android
             opts.InvokeColor(outerItem.StrokeColor.ToAndroid());
             opts.Clickable(outerItem.IsClickable);
             opts.InvokeZIndex(outerItem.ZIndex);
+            opts.InvokeStartCap(new RoundCap());
+            opts.InvokeEndCap(new RoundCap());
 
             var nativePolyline = NativeMap.AddPolyline(opts);
 

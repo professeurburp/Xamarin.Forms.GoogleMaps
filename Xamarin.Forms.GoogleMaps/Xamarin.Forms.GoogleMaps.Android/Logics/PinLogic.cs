@@ -8,6 +8,7 @@ using Xamarin.Forms.GoogleMaps.Android.Extensions;
 using NativeBitmapDescriptorFactory = Android.Gms.Maps.Model.BitmapDescriptorFactory;
 using Android.Widget;
 using System;
+using System.Threading.Tasks;
 
 namespace Xamarin.Forms.GoogleMaps.Logics.Android
 {
@@ -284,6 +285,28 @@ namespace Xamarin.Forms.GoogleMaps.Logics.Android
         }
 
         private async void TransformXamarinViewToAndroidBitmap(Pin outerItem, Marker nativeItem)
+        {
+            try
+            {
+                await TransformXamarinViewToAndroidBitmapAsync(outerItem, nativeItem);
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e);
+                System.Diagnostics.Debug.WriteLine("Exception at first attempt to transform xamarin view to bitmap: second try...");
+                try
+                {
+                    await Task.Delay(200);
+                    await TransformXamarinViewToAndroidBitmapAsync(outerItem, nativeItem);
+                }
+                catch (Exception e2)
+                {
+                    System.Diagnostics.Debug.WriteLine(e2);
+                }
+            }            
+        }
+
+        private async Task TransformXamarinViewToAndroidBitmapAsync(Pin outerItem, Marker nativeItem)
         {
             if (outerItem?.Icon?.Type == BitmapDescriptorType.View && outerItem?.Icon?.View != null)
             {
