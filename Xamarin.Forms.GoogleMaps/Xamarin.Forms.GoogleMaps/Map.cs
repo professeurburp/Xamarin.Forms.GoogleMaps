@@ -75,6 +75,7 @@ namespace Xamarin.Forms.GoogleMaps
 
         [Obsolete("Please use Map.CameraIdled instead of this")]
         public event EventHandler<CameraChangedEventArgs> CameraChanged;
+        public event EventHandler<EventArgs> UserGestureDetected;
         public event EventHandler<CameraMoveStartedEventArgs> CameraMoveStarted;
         public event EventHandler<CameraMovingEventArgs> CameraMoving;
         public event EventHandler<CameraIdledEventArgs> CameraIdled;
@@ -376,6 +377,11 @@ namespace Xamarin.Forms.GoogleMaps
             var args = new MyLocationButtonClickedEventArgs();
             MyLocationButtonClicked?.Invoke(this, args);
             return args.Handled;
+        }
+
+        internal void SendCameraWillMoveFromGesture()
+        {
+            UserGestureDetected?.Invoke(this, new EventArgs());
         }
 
         internal void SendCameraChanged(CameraPosition position)

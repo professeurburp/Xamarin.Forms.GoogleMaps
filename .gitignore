@@ -43,3 +43,5 @@ Thumbs.db
 *.nupkg
 *.lock.json
 .idea/
+
+.vs/

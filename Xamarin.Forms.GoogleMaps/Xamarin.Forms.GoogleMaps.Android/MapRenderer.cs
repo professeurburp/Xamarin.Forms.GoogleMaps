@@ -18,9 +18,12 @@ using Android.Views;
 using Xamarin.Forms.GoogleMaps.Android.Logics;
 using Xamarin.Forms.GoogleMaps.Internals;
 
+using static Android.Gms.Maps.GoogleMap;
+
 namespace Xamarin.Forms.GoogleMaps.Android
 {
     public class MapRenderer : ViewRenderer,
+        GoogleMap.IOnCameraMoveStartedListener,
         GoogleMap.IOnMapClickListener,
         GoogleMap.IOnMapLongClickListener,
         GoogleMap.IOnMyLocationButtonClickListener
@@ -152,6 +155,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
             {
                 _cameraLogic.Register(Map, NativeMap);
 
+                map.SetOnCameraMoveStartedListener(this);
                 map.SetOnMapClickListener(this);
                 map.SetOnMapLongClickListener(this);
                 map.SetOnMyLocationButtonClickListener(this);
@@ -385,6 +389,14 @@ namespace Xamarin.Forms.GoogleMaps.Android
         public bool OnMyLocationButtonClick()
         {
             return Map.SendMyLocationClicked();
+        }
+
+        public void OnCameraMoveStarted(int reason)
+        {
+            if (OnCameraMoveStartedListener.ReasonGesture == reason)
+            {
+                Map.SendCameraWillMoveFromGesture();
+            }
         }
 
         void UpdateVisibleRegion(LatLng pos)

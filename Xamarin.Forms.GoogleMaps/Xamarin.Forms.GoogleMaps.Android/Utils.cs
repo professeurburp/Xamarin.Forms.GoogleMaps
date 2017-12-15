@@ -70,43 +70,53 @@ namespace Xamarin.Forms.GoogleMaps.Android
 
         public static Task<global::Android.Gms.Maps.Model.BitmapDescriptor> ConvertViewToBitmapDescriptor(global::Android.Views.View v)
         {
-            return Task.Run(() => {
+            return Task.Run(
+                () =>
+                    {
+                        var bmp = ConvertViewToBitmap(v);
+                        var img = global::Android.Gms.Maps.Model.BitmapDescriptorFactory.FromBitmap(bmp);
 
-                var bmp = ConvertViewToBitmap(v);
-                var img = global::Android.Gms.Maps.Model.BitmapDescriptorFactory.FromBitmap(bmp);
+                        var buffer = ByteBuffer.Allocate(bmp.ByteCount);
+                        bmp.CopyPixelsToBuffer(buffer);
+                        buffer.Rewind();
 
-                var buffer = ByteBuffer.Allocate(bmp.ByteCount);
-                bmp.CopyPixelsToBuffer(buffer);
-                buffer.Rewind();
+                        // https://forums.xamarin.com/discussion/5950/how-to-convert-from-bitmap-to-byte-without-bitmap-compress
+                        IntPtr classHandle = JNIEnv.FindClass("java/nio/ByteBuffer");
+                        IntPtr methodId = JNIEnv.GetMethodID(classHandle, "array", "()[B");
+                        IntPtr resultHandle = JNIEnv.CallObjectMethod(buffer.Handle, methodId);
+                        byte[] bytes = JNIEnv.GetArray<byte>(resultHandle);
+                        JNIEnv.DeleteLocalRef(resultHandle);
 
-                // https://forums.xamarin.com/discussion/5950/how-to-convert-from-bitmap-to-byte-without-bitmap-compress
-                IntPtr classHandle = JNIEnv.FindClass("java/nio/ByteBuffer");
-                IntPtr methodId = JNIEnv.GetMethodID(classHandle, "array", "()[B");
-                IntPtr resultHandle = JNIEnv.CallObjectMethod(buffer.Handle, methodId);
-                byte[] bytes = JNIEnv.GetArray<byte>(resultHandle);
-                JNIEnv.DeleteLocalRef(resultHandle);
+                        var sha = MD5.Create();
+                        var hash = Convert.ToBase64String(sha.ComputeHash(bytes));
+                        
+                        if (cache.TryGetValue(hash, out global::Android.Gms.Maps.Model.BitmapDescriptor db))
+                        {
+                            if (db?.Handle == null)
+                            {
+                                cache.TryRemove(hash, out db);
+                                db = null;
+                            }
+                        }
 
-                var sha = MD5.Create();
-                var hash = Convert.ToBase64String(sha.ComputeHash(bytes));
+                        if (db != null)
+                        {
+                            lruTracker.Remove(hash);
+                            lruTracker.AddLast(hash);
 
-                var exists = cache.ContainsKey(hash);
-                if (exists)
-                {
-                    lruTracker.Remove(hash);
-                    lruTracker.AddLast(hash);
-                    return cache[hash];
-                }
-                if (lruTracker.Count > 10) // O(1)
-                {
-                    global::Android.Gms.Maps.Model.BitmapDescriptor tmp;
-                    cache.TryRemove(lruTracker.First.Value, out tmp);
-                    lruTracker.RemoveFirst();
-                }
-                cache.GetOrAdd(hash, img);
-                lruTracker.AddLast(hash);
+                            return cache[hash];
+                        }
+                        if (lruTracker.Count > 10) // O(1)
+                        {
+                            global::Android.Gms.Maps.Model.BitmapDescriptor tmp;
+                            cache.TryRemove(lruTracker.First.Value, out tmp);
+                            lruTracker.RemoveFirst();
+                        }
+                        cache.GetOrAdd(hash, img);
+                        lruTracker.AddLast(hash);
 
-                return img;
-            });
+                        return img;
+                    });
         }
 
         public static global::Android.Widget.FrameLayout AddViewOnFrameLayout(global::Android.Views.View view, int width, int height)
