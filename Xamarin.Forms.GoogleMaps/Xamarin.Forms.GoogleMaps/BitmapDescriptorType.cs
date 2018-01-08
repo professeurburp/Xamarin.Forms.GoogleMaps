@@ -8,6 +8,7 @@ namespace Xamarin.Forms.GoogleMaps
         Stream,
         AbsolutePath,
         View,
+        Resource,
     }
 }
 

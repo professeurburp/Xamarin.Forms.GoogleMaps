@@ -8,6 +8,7 @@ namespace Xamarin.Forms.GoogleMaps
         internal BitmapDescriptorType Type { get; private set; }
         internal Color Color { get; private set; }
         internal string BundleName { get; private set; }
+        internal string ResourceName { get; private set; }
         internal Stream Stream { get; private set; }
         internal string AbsolutePath { get; private set; }
         internal View View { get; private set; }
@@ -31,6 +32,15 @@ namespace Xamarin.Forms.GoogleMaps
             {
                 Type = BitmapDescriptorType.Bundle,
                 BundleName = bundleName
+            };
+        }
+
+        internal static BitmapDescriptor FromResource(string resourceName)
+        {
+            return new BitmapDescriptor()
+            {
+                Type = BitmapDescriptorType.Resource,
+                ResourceName = resourceName
             };
         }
 

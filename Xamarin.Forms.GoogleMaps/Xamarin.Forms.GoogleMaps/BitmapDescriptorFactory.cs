@@ -15,6 +15,11 @@ namespace Xamarin.Forms.GoogleMaps
             return BitmapDescriptor.FromBundle(bundleName);
         }
 
+        public static BitmapDescriptor FromResource(string resourceName)
+        {
+            return BitmapDescriptor.FromResource(resourceName);
+        }
+
         public static BitmapDescriptor FromStream(Stream stream)
         {
             return BitmapDescriptor.FromStream(stream);
