@@ -16,15 +16,18 @@ namespace Xamarin.Forms.GoogleMaps.Logics.Android
     {
         private readonly Action<LatLng> _updateVisibleRegion;
 
+        private MapView _mapView;
+
         public CameraLogic(Action<LatLng> updateVisibleRegion)
         {
             _updateVisibleRegion = updateVisibleRegion;
         }
-
-        public override void Register(Map map, GoogleMap nativeMap)
+        
+        public void Register(Map map, GoogleMap nativeMap, MapView mapView)
         {
             base.Register(map, nativeMap);
 
+            _mapView = mapView;
             UnsubscribeCameraEvents(_nativeMap);
 
             nativeMap.CameraChange += NativeMap_CameraChange;
@@ -55,7 +58,7 @@ namespace Xamarin.Forms.GoogleMaps.Logics.Android
 
         public override void OnMoveToRegionRequest(MoveToRegionMessage m)
         {
-            if (_nativeMap == null)
+            if (_nativeMap == null || _mapView.Height == 0 || _mapView.Width == 0)
                 return;
 
             var span = m.Span;

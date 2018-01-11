@@ -242,14 +242,14 @@ namespace Xamarin.Forms.GoogleMaps
             return _pins.GetEnumerator();
         }
 
-        public void MoveToRegion(MapSpan mapSpan, bool animate = true)
+        public void MoveToRegion(MapSpan mapSpan, int padding = 0, bool animate = true)
         {
             if (mapSpan == null)
                 throw new ArgumentNullException(nameof(mapSpan));
 
             if (_useMoveToRegisonAsInitialBounds)
             {
-                InitialCameraUpdate = CameraUpdateFactory.NewBounds(mapSpan.ToBounds(), 0);
+                InitialCameraUpdate = CameraUpdateFactory.NewBounds(mapSpan.ToBounds(), padding);
                 _useMoveToRegisonAsInitialBounds = false;
             }
 

@@ -4,11 +4,11 @@ using System.IO;
 using Android.Gms.Maps;
 using Android.Gms.Maps.Model;
 using Android.OS;
-using Java.Lang;
 using Xamarin.Forms.Platform.Android;
 using Math = System.Math;
 using Android.Util;
 using Android.App;
+using Android.Content;
 using Android.Graphics;
 using Xamarin.Forms.GoogleMaps.Logics.Android;
 using Xamarin.Forms.GoogleMaps.Logics;
@@ -17,7 +17,6 @@ using Android.Widget;
 using Android.Views;
 using Xamarin.Forms.GoogleMaps.Android.Logics;
 using Xamarin.Forms.GoogleMaps.Internals;
-
 using static Android.Gms.Maps.GoogleMap;
 
 namespace Xamarin.Forms.GoogleMaps.Android
@@ -32,7 +31,8 @@ namespace Xamarin.Forms.GoogleMaps.Android
         readonly UiSettingsLogic _uiSettingsLogic = new UiSettingsLogic();
         readonly BaseLogic<GoogleMap>[] _logics;
 
-        public MapRenderer() : base()
+        public MapRenderer(Context context) 
+            : base(context)
         {
             _cameraLogic = new CameraLogic(UpdateVisibleRegion);
 
@@ -48,10 +48,12 @@ namespace Xamarin.Forms.GoogleMaps.Android
             };
         }
 
-        public MapRenderer(IntPtr javaReference, global::Android.Runtime.JniHandleOwnership transfer) : this() { }
+        private static Bundle _sBundle;
 
-        static Bundle s_bundle;
-        internal static Bundle Bundle { set { s_bundle = value; } }
+        internal static Bundle Bundle
+        {
+            set => _sBundle = value;
+        }
 
         protected GoogleMap NativeMap { get; private set; }
 
@@ -82,11 +84,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
             // For XAML Previewer or FormsGoogleMaps.Init not called.
             if (!FormsGoogleMaps.IsInitialized)
             {
-                var tv = new TextView(Context)
-                {
-                    Gravity = GravityFlags.Center,
-                    Text = "Xamarin.Forms.GoogleMaps"
-                };
+                var tv = new TextView(Context) {Gravity = GravityFlags.Center, Text = "Xamarin.Forms.GoogleMaps"};
                 tv.SetBackgroundColor(Color.Teal.ToAndroid());
                 tv.SetTextColor(Color.Black.ToAndroid());
                 SetNativeControl(tv);
@@ -96,12 +94,11 @@ namespace Xamarin.Forms.GoogleMaps.Android
             var oldMapView = (MapView)Control;
 
             var mapView = new MapView(Context);
-            mapView.OnCreate(s_bundle);
+            mapView.OnCreate(_sBundle);
             mapView.OnResume();
             SetNativeControl(mapView);
 
-            var activity = Context as Activity;
-            if (activity != null)
+            if (Context is Activity activity)
             {
                 var metrics = new DisplayMetrics();
                 activity.WindowManager.DefaultDisplay.GetMetrics(metrics);
@@ -130,7 +127,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
 
             NativeMap = await ((MapView)Control).GetGoogleMapAsync();
 
-            _cameraLogic.Register(Map, NativeMap);
+            _cameraLogic.Register(Map, NativeMap, (MapView)Control);
             Map.OnSnapshot += OnSnapshot;
 
             _uiSettingsLogic.Register(Map, NativeMap);
@@ -140,20 +137,22 @@ namespace Xamarin.Forms.GoogleMaps.Android
 
         private void OnSnapshot(TakeSnapshotMessage snapshotMessage)
         {
-            NativeMap.Snapshot(new DelegateSnapshotReadyCallback(snapshot =>
-            {
-                var stream = new MemoryStream();
-                snapshot.Compress(Bitmap.CompressFormat.Png, 0, stream);
-                stream.Position = 0;
-                snapshotMessage?.OnSnapshot?.Invoke(stream);
-            }));
+            NativeMap.Snapshot(
+                new DelegateSnapshotReadyCallback(
+                    snapshot =>
+                    {
+                        var stream = new MemoryStream();
+                        snapshot.Compress(Bitmap.CompressFormat.Png, 0, stream);
+                        stream.Position = 0;
+                        snapshotMessage?.OnSnapshot?.Invoke(stream);
+                    }));
         }
 
         void OnMapReady(GoogleMap map)
         {
             if (map != null)
             {
-                _cameraLogic.Register(Map, NativeMap);
+                _cameraLogic.Register(Map, NativeMap, (MapView)Control);
 
                 map.SetOnCameraMoveStartedListener(this);
                 map.SetOnMapClickListener(this);
@@ -310,7 +309,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
         }
 
         private void UpdateHasZoomEnabled(
-            bool? initialZoomControlsEnabled = null, 
+            bool? initialZoomControlsEnabled = null,
             bool? initialZoomGesturesEnabled = null)
         {
             NativeMap.UiSettings.ZoomControlsEnabled = initialZoomControlsEnabled ?? Map.HasZoomEnabled;
@@ -334,9 +333,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
 
         private void UpdateMapStyle()
         {
-            NativeMap.SetMapStyle(Map.MapStyle != null ?
-                new MapStyleOptions(Map.MapStyle.JsonStyle) : 
-                null);
+            NativeMap.SetMapStyle(Map.MapStyle != null ? new MapStyleOptions(Map.MapStyle.JsonStyle) : null);
         }
 
         void SetMapType()
@@ -370,8 +367,8 @@ namespace Xamarin.Forms.GoogleMaps.Android
         void SetPadding()
         {
             NativeMap?.SetPadding(
-                (int)(Map.Padding.Left * _scaledDensity), 
-                (int)(Map.Padding.Top * _scaledDensity), 
+                (int)(Map.Padding.Left * _scaledDensity),
+                (int)(Map.Padding.Top * _scaledDensity),
                 (int)(Map.Padding.Right * _scaledDensity),
                 (int)(Map.Padding.Bottom * _scaledDensity));
         }
@@ -413,14 +410,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
             var lr = projection.FromScreenLocation(new global::Android.Graphics.Point(width, height));
             var dlat = Math.Max(Math.Abs(ul.Latitude - lr.Latitude), Math.Abs(ur.Latitude - ll.Latitude));
             var dlong = Math.Max(Math.Abs(ul.Longitude - lr.Longitude), Math.Abs(ur.Longitude - ll.Longitude));
-            ((Map)Element).VisibleRegion = new MapSpan(
-                    new Position(
-                        pos.Latitude,
-                        pos.Longitude
-                    ),
-                dlat,
-                dlong
-            );
+            ((Map)Element).VisibleRegion = new MapSpan(new Position(pos.Latitude, pos.Longitude), dlat, dlong);
         }
 
         #region Overridable Members
@@ -468,6 +458,7 @@ namespace Xamarin.Forms.GoogleMaps.Android
         #endregion
 
         bool _disposed;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && !_disposed)
