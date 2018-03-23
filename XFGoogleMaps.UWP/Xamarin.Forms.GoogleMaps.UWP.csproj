@@ -127,7 +127,7 @@
     <EmbeddedResource Include="Properties\Xamarin.Forms.GoogleMaps.UWP.rd.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Xamarin.Forms.GoogleMaps\Xamarin.Forms.GoogleMaps.csproj">
+    <ProjectReference Include="..\XFGoogleMaps\Xamarin.Forms.GoogleMaps.csproj">
       <Project>{f1c8f5a0-a55d-4c7d-9737-472f7ac222d4}</Project>
       <Name>Xamarin.Forms.GoogleMaps</Name>
     </ProjectReference>
