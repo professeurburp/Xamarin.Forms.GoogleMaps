@@ -10,7 +10,9 @@
 	<Version>2.3.0.0</Version>
 	<FileVersion>2.3.0.0</FileVersion>
   </PropertyGroup>
-
+  <PropertyGroup>
+    <UseShortFileNames>True</UseShortFileNames>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Xamarin.Forms" Version="2.5.0.280555" />
   </ItemGroup>
